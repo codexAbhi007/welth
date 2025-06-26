@@ -4,7 +4,7 @@ export const serializeTransaction = (obj) => {
     serialized.balance = obj.balance.toNumber();
   }
   if(obj.amount){
-    serialized.balance = obj.balance.toNumber()
+    serialized.balance = obj.amount.toNumber()
   }
   return serialized
 };
