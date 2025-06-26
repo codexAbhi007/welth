@@ -136,7 +136,7 @@
 
 .hero-image {
   transform: rotateX(15deg) scale(1);
-  transition: transform 1.5s ease-out;
+  transition: transform 0.8s ease-out;
   transform-style: preserve-3d;
   will-change: transform;
 }
