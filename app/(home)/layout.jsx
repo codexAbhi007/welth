@@ -2,7 +2,7 @@ import Header from "@/components/header"
 
 const HomeLayout = ({children}) => {
   return (
-    <div className="">
+    <div >
         <Header/>
         {children}
     </div>
