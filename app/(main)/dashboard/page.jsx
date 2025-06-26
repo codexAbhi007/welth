@@ -1,13 +1,12 @@
-
 import { getuserAccounts } from "@/actions/dashboard";
-import {AccountCard} from "@/components/account-card";
+import { AccountCard } from "@/components/account-card";
 import AccountGridModal from "@/components/account-grid-modal";
 import CreateAccountModal from "@/components/create-account-modal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Plus } from "lucide-react";
 
 const DashboardPage = async () => {
-  const accounts = await getuserAccounts()
+  const accounts = await getuserAccounts();
   return (
     <div className="px-5">
       {/* Budget Progress */}
@@ -16,20 +15,11 @@ const DashboardPage = async () => {
 
       {/* Accounts Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* <CreateAccountModal >
-          <Card className="hover:shadow-md transition-shadow cursor-pointer border-dashed">
-            <CardContent className="flex flex-col items-center justify-center text-muted-foreground h-full pt-5">
-              <Plus className="h-10 w-10 mb-2"/>
-              <p className="text-sm font-medium">Add new Account</p>
-            </CardContent>
-          </Card>
-        </CreateAccountModal> */}
-        <AccountGridModal/>
-        {accounts?.length > 0 && accounts?.map((account)=>{
-          return (
-            <AccountCard key={account.id} account={account}/>
-          )
-        })}
+        <AccountGridModal />
+        {accounts?.length > 0 &&
+          accounts?.map((account) => {
+            return <AccountCard key={account.id} account={account} />;
+          })}
       </div>
     </div>
   );
