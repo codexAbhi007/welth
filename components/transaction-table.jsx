@@ -18,6 +18,8 @@ import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { Badge } from "./ui/badge";
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   Clock,
   MoreHorizontal,
@@ -36,7 +38,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Input } from "./ui/input";
 import {
   Select,
@@ -45,6 +47,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+
+import useFetch from "@/hooks/use-fetch";
+import { bulkDeleteTransactions } from "@/actions/accounts";
+import { BarLoader } from "react-spinners";
+import { toast } from "sonner";
+import { DEFAULT_LIMIT } from "@/constants/constants";
+import AlertDialogBoxDelete from "./AlertDialogBoxDelete";
+
+const ITEMS_PER_PAGE = DEFAULT_LIMIT;
 
 const RECURRING_INTERVALS = {
   DAILY: "Daily",
@@ -63,6 +74,8 @@ const TransactionTable = ({ transactions }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [recurringFilter, setRecurringFilter] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const router = useRouter();
 
   const filteredAndSortedTransactions = useMemo(() => {
@@ -83,8 +96,7 @@ const TransactionTable = ({ transactions }) => {
       });
     }
 
-
-     result.sort((a, b) => {
+    result.sort((a, b) => {
       let comparison = 0;
 
       switch (sortConfig.field) {
@@ -107,18 +119,18 @@ const TransactionTable = ({ transactions }) => {
     return result;
   }, [transactions, searchTerm, typeFilter, recurringFilter, sortConfig]);
 
+  // Pagination calculations
+  const totalPages = Math.ceil(
+    filteredAndSortedTransactions.length / ITEMS_PER_PAGE
+  );
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAndSortedTransactions.slice(
+      startIndex,
+      startIndex + ITEMS_PER_PAGE
+    );
+  }, [filteredAndSortedTransactions, currentPage]);
 
-
-
-
-
-
-
-
-
-
-
-  // console.log(selectedIds);
   const handleSort = (field) => {
     setSortConfig((current) => ({
       field,
@@ -126,6 +138,7 @@ const TransactionTable = ({ transactions }) => {
         current.field === field && current.direction === "asc" ? "desc" : "asc",
     }));
   };
+
   const handleSelect = (id) => {
     setSelectedIds((current) =>
       current.includes(id)
@@ -145,10 +158,34 @@ const TransactionTable = ({ transactions }) => {
     setSearchTerm("");
     setTypeFilter("");
     setRecurringFilter("");
+    selectedIds.length = 0
+    paginatedTransactions.length = 0
+    
+  };
+
+  const {
+    loading: deleteLoading,
+    fn: deleteFn,
+    data: deleted,
+  } = useFetch(bulkDeleteTransactions);
+
+  const handleBulkDelete = async () => {
+    setDialogOpen(true);
+  };
+  useEffect(() => {
+    if (deleted && !deleteLoading) {
+      toast.error("Transactions deleted successfully");
+    }
+  }, [deleted, deleteLoading]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    setSelectedIds([]); // Clear selections on page change
   };
 
   return (
     <div className="space-y-4">
+      {deleteLoading && <BarLoader className="mt-4" width={"100%"} />}
       {/* Filter */}
       <div className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
@@ -157,7 +194,10 @@ const TransactionTable = ({ transactions }) => {
             className="pl-8 text-xs text-muted-foreground"
             placeholder="Search transactions..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value)
+              setCurrentPage(1)
+            } }
           />
         </div>
         <div className="flex gap-2">
@@ -166,6 +206,7 @@ const TransactionTable = ({ transactions }) => {
             value={typeFilter}
             onValueChange={(value) => {
               setTypeFilter(value);
+              setCurrentPage(1)
             }}
           >
             <SelectTrigger className="text-xs">
@@ -182,6 +223,7 @@ const TransactionTable = ({ transactions }) => {
             value={recurringFilter}
             onValueChange={(value) => {
               setRecurringFilter(value);
+              setCurrentPage(1)
             }}
           >
             <SelectTrigger className="text-xs">
@@ -195,7 +237,11 @@ const TransactionTable = ({ transactions }) => {
 
           {selectedIds.length > 0 && (
             <div>
-              <Button variant="destructive" className="text-xs ">
+              <Button
+                variant="destructive"
+                className="text-xs "
+                onClick={handleBulkDelete}
+              >
                 <p className="flex items-center justify-center gap-1">
                   <Trash2 />
                   Delete {selectedIds.length > 1 ? "entries" : "entry"}
@@ -203,8 +249,15 @@ const TransactionTable = ({ transactions }) => {
               </Button>
             </div>
           )}
+          <AlertDialogBoxDelete
+            open={dialogOpen}
+            setOpen={setDialogOpen}
+            onConfirm={() => deleteFn(selectedIds)}
+            title={`Are you sure want to delete ${selectedIds.length} transactions?`}
+            description="This action cannot be undone and will permanently deleted the selected transactions"
+          />
 
-          {(searchTerm || typeFilter || recurringFilter) && (
+          {(searchTerm || typeFilter || recurringFilter || selectedIds.length > 0) && (
             <Button
               variant="outline"
               size="icon"
@@ -225,11 +278,11 @@ const TransactionTable = ({ transactions }) => {
               <TableHead className="w-[50px]">
                 <Checkbox
                   className="hover:cursor-pointer"
-                  onCheckedChange={handleSelectAll}
+                  onCheckedChange={(checked) => handleSelectAll()}
                   checked={
                     selectedIds.length ===
-                      filteredAndSortedTransactions.length &&
-                    filteredAndSortedTransactions.length > 0
+                      paginatedTransactions.length &&
+                    paginatedTransactions.length > 0
                   }
                 />
               </TableHead>
@@ -284,7 +337,7 @@ const TransactionTable = ({ transactions }) => {
           </TableHeader>
 
           <TableBody>
-            {filteredAndSortedTransactions.length === 0 ? (
+            {paginatedTransactions.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={7}
@@ -294,12 +347,14 @@ const TransactionTable = ({ transactions }) => {
                 </TableCell>
               </TableRow>
             ) : (
-              filteredAndSortedTransactions.map((transaction) => (
+              paginatedTransactions.map((transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell>
                     <Checkbox
                       className="hover:cursor-pointer"
-                      onCheckedChange={() => handleSelect(transaction.id)}
+                      onCheckedChange={(checked) =>
+                        handleSelect(transaction.id)
+                      }
                       checked={selectedIds.includes(transaction.id)}
                     />
                   </TableCell>
@@ -331,7 +386,10 @@ const TransactionTable = ({ transactions }) => {
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger>
-                            <Badge className="gap-1 bg-purple-100 text-purple-700 hover:bg-purple-200">
+                            <Badge
+                              className="gap-1 bg-purple-100 text-purple-700 hover:bg-purple-200"
+                              variant="secodary"
+                            >
                               <RefreshCw className="w-3 h-3" />
                               {
                                 RECURRING_INTERVALS[
@@ -380,7 +438,10 @@ const TransactionTable = ({ transactions }) => {
                           Edit
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive !hover:text-destructive group">
+                        <DropdownMenuItem
+                          className="text-destructive !hover:text-destructive group"
+                          onClick={() => deleteFn([transaction.id])}
+                        >
                           <Trash2 className="text-destructive" />
                           <p className="group-hover:text-destructive">Delete</p>
                         </DropdownMenuItem>
@@ -393,6 +454,30 @@ const TransactionTable = ({ transactions }) => {
           </TableBody>
         </Table>
       </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
