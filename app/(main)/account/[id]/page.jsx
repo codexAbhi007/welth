@@ -1,4 +1,5 @@
 import { getAccountWithTransactions } from "@/actions/accounts";
+import AccountChart from "@/components/account-chart";
 import TransactionTable from "@/components/transaction-table";
 import { formatCurrency } from "@/utils/currency-display";
 import { notFound } from "next/navigation";
@@ -9,7 +10,7 @@ const AccountIdPage = async (context) => {
   if (!accountData) notFound();
   const { transactions, ...account } = accountData;
   return (
-    <div className="space-y-8 px-5">
+    <div className="w-11/12 md:w-3/4 space-y-8 mx-auto">
       <div className="flex gap-4 items-end justify-between">
         <div>
           <h1 className="text-5xl sm:text-6xl font-bold tracking-tight gradient gradient-title capitalize">
@@ -32,6 +33,7 @@ const AccountIdPage = async (context) => {
       </div>
 
       {/* Chart Section */}
+      <AccountChart transactions={transactions}/>
       {/* Transaction Table */}
 
       <TransactionTable transactions={transactions} />

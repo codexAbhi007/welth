@@ -184,7 +184,7 @@ const TransactionTable = ({ transactions }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 mx-auto">
       {deleteLoading && <BarLoader className="mt-4" width={"100%"} />}
       {/* Filter */}
       <div className="flex flex-col sm:flex-row gap-4">
@@ -271,7 +271,7 @@ const TransactionTable = ({ transactions }) => {
       </div>
 
       {/* Transaction Table */}
-      <div className="rounded-md border w-full overflow-x-auto">
+      <div className="w-full mx-auto rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow>
