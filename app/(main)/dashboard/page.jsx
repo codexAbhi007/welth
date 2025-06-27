@@ -1,9 +1,7 @@
 import { getuserAccounts } from "@/actions/dashboard";
 import { AccountCard } from "@/components/account-card";
 import AccountGridModal from "@/components/account-grid-modal";
-import CreateAccountModal from "@/components/create-account-modal";
-import { Card, CardContent } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+export const dynamic = "force-dynamic";
 
 const DashboardPage = async () => {
   const accounts = await getuserAccounts();

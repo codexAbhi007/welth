@@ -16,6 +16,7 @@ export async function createAccount(data) {
       where: { clerkUserId: userId },
     });
     if (!user) throw new Error("User not Found");
+    
 
     //Convert balance to float
     const balanceFloat = parseFloat(data.balance);
