@@ -1,21 +1,23 @@
 import { getCurrentBudget } from "@/actions/budget";
-import { getuserAccounts } from "@/actions/dashboard";
+import { getDashboardData, getuserAccounts } from "@/actions/dashboard";
 import { AccountCard } from "@/components/account-card";
 import AccountGridModal from "@/components/account-grid-modal";
 import { BudgetProgress } from "@/components/BudgetProgress";
+import { DashboardOverview } from "@/components/transaction-overview";
 
 export const dynamic = "force-dynamic";
 
 const DashboardPage = async () => {
-  let budgetData = null;
-  const accounts = await getuserAccounts();
-
+  const [accounts, transactions] = await Promise.all([
+    getuserAccounts(),
+    getDashboardData(),
+  ]);
   const defaultAccount = accounts?.find((account) => account.isDefault);
-
+  let budgetData = null;
   if (defaultAccount) {
     budgetData = await getCurrentBudget(defaultAccount.id);
   }
-  console.log("Budget Data", budgetData)
+  console.log("Budget Data", budgetData);
   return (
     <div className="px-5">
       {/* Budget Progress */}
@@ -26,7 +28,11 @@ const DashboardPage = async () => {
         />
       )}
 
-      {/* Overview */}
+      {/* Dashboard Overview */}
+      <DashboardOverview
+        accounts={accounts}
+        transactions={transactions || []}
+      />
 
       {/* Accounts Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 my-10">
