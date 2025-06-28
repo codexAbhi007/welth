@@ -24,7 +24,7 @@ import { createAccount } from "@/actions/dashboard";
 import { toast } from "sonner";
 import CreateAccountForm from "./forms/create-account-form";
 
-const CreateAccountModal = ({ children }) => {
+const CreateAccountModal = ({ children, extraStyles }) => {
   const [open, setOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -73,7 +73,7 @@ const CreateAccountModal = ({ children }) => {
     <>
       {isMobile ? (
         <Drawer open={open} onOpenChange={setOpen}>
-          <DrawerTrigger>{children}</DrawerTrigger>
+          <DrawerTrigger className={`${extraStyles}`}>{children}</DrawerTrigger>
           <DrawerContent>
             <DrawerHeader>
               <DrawerTitle>Create new Account</DrawerTitle>
